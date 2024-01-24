@@ -1,0 +1,4 @@
+better-automation==2.1.0b15
+web3
+loguru
+inquirer

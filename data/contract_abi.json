@@ -1,0 +1,540 @@
+[
+    {
+        "type": "constructor",
+        "inputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "name": "Initialized",
+        "type": "event",
+        "inputs": [
+            {
+                "name": "version",
+                "type": "uint8",
+                "indexed": false,
+                "internalType": "uint8"
+            }
+        ],
+        "anonymous": false,
+        "signature": "0x7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb3847402498"
+    },
+    {
+        "name": "OwnershipTransferred",
+        "type": "event",
+        "inputs": [
+            {
+                "name": "previousOwner",
+                "type": "address",
+                "indexed": true,
+                "internalType": "address"
+            },
+            {
+                "name": "newOwner",
+                "type": "address",
+                "indexed": true,
+                "internalType": "address"
+            }
+        ],
+        "anonymous": false,
+        "signature": "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0"
+    },
+    {
+        "name": "UserQuestResult",
+        "type": "event",
+        "inputs": [
+            {
+                "name": "user",
+                "type": "address",
+                "indexed": true,
+                "internalType": "address"
+            },
+            {
+                "name": "questType",
+                "type": "uint256",
+                "indexed": false,
+                "internalType": "uint256"
+            },
+            {
+                "name": "quests",
+                "type": "uint256",
+                "indexed": false,
+                "internalType": "uint256"
+            },
+            {
+                "name": "uncommon",
+                "type": "uint256",
+                "indexed": false,
+                "internalType": "uint256"
+            },
+            {
+                "name": "rare",
+                "type": "uint256",
+                "indexed": false,
+                "internalType": "uint256"
+            },
+            {
+                "name": "legendary",
+                "type": "uint256",
+                "indexed": false,
+                "internalType": "uint256"
+            },
+            {
+                "name": "mythical",
+                "type": "uint256",
+                "indexed": false,
+                "internalType": "uint256"
+            }
+        ],
+        "anonymous": false,
+        "signature": "0x62437e973c89fadc3c7ae00cbd583c7225d842db5d4a5f003b322a8ab08b780a"
+    },
+    {
+        "name": "checkValidity",
+        "type": "function",
+        "inputs": [
+            {
+                "name": "signature",
+                "type": "bytes",
+                "internalType": "bytes"
+            },
+            {
+                "name": "action",
+                "type": "string",
+                "internalType": "string"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "bool",
+                "internalType": "bool"
+            }
+        ],
+        "constant": true,
+        "signature": "0x30f89953",
+        "stateMutability": "view"
+    },
+    {
+        "name": "getAllUsers",
+        "type": "function",
+        "inputs": [
+            {
+                "name": "fromIdx",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "toIdx",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address[]",
+                "internalType": "address[]"
+            }
+        ],
+        "constant": true,
+        "signature": "0x4ff113e9",
+        "stateMutability": "view"
+    },
+    {
+        "name": "getAllUsersCount",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256",
+                "value": "0",
+                "internalType": "uint256"
+            }
+        ],
+        "constant": true,
+        "signature": "0x38abfc41",
+        "stateMutability": "view"
+    },
+    {
+        "name": "getNonceUsedMultiple",
+        "type": "function",
+        "inputs": [
+            {
+                "name": "nonces",
+                "type": "string[]",
+                "internalType": "string[]"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "bool[]",
+                "internalType": "bool[]"
+            }
+        ],
+        "constant": true,
+        "signature": "0xb9310c5b",
+        "stateMutability": "view"
+    },
+    {
+        "name": "getQuests",
+        "type": "function",
+        "inputs": [
+            {
+                "name": "currentRank",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "user",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "constant": true,
+        "signature": "0x6895a055",
+        "stateMutability": "view"
+    },
+    {
+        "name": "getUserQuestResultsMultiple",
+        "type": "function",
+        "inputs": [
+            {
+                "name": "addresses",
+                "type": "address[]",
+                "internalType": "address[]"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "tuple[]",
+                "components": [
+                    {
+                        "name": "uncommon",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "rare",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "legendary",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "mythical",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    }
+                ],
+                "internalType": "struct Well3Questing.QuestResult[]"
+            }
+        ],
+        "constant": true,
+        "signature": "0x6436111d",
+        "stateMutability": "view"
+    },
+    {
+        "name": "initialize",
+        "type": "function",
+        "inputs": [
+            {
+                "name": "_signer",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "outputs": [],
+        "signature": "0xc4d66de8",
+        "stateMutability": "nonpayable"
+    },
+    {
+        "name": "lastKnownUserRank",
+        "type": "function",
+        "inputs": [
+            {
+                "name": "",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "constant": true,
+        "signature": "0x92766d39",
+        "stateMutability": "view"
+    },
+    {
+        "name": "nonceQuest",
+        "type": "function",
+        "inputs": [
+            {
+                "name": "nonce",
+                "type": "string",
+                "internalType": "string"
+            },
+            {
+                "name": "signature",
+                "type": "bytes",
+                "internalType": "bytes"
+            }
+        ],
+        "outputs": [],
+        "signature": "0x93bc5617",
+        "stateMutability": "nonpayable"
+    },
+    {
+        "name": "nonceUsed",
+        "type": "function",
+        "inputs": [
+            {
+                "name": "",
+                "type": "string",
+                "internalType": "string"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "bool",
+                "internalType": "bool"
+            }
+        ],
+        "constant": true,
+        "signature": "0x923c235b",
+        "stateMutability": "view"
+    },
+    {
+        "name": "owner",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address",
+                "value": "0x0000000000000000000000000000000000000000",
+                "internalType": "address"
+            }
+        ],
+        "constant": true,
+        "signature": "0x8da5cb5b",
+        "stateMutability": "view"
+    },
+    {
+        "name": "questResults",
+        "type": "function",
+        "inputs": [
+            {
+                "name": "",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "uncommon",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "rare",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "legendary",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "mythical",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "constant": true,
+        "signature": "0xc278aa2f",
+        "stateMutability": "view"
+    },
+    {
+        "name": "questTypeProbs",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "uncommon",
+                "type": "uint256",
+                "value": {
+                    "0": "0",
+                    "1": "0",
+                    "2": "0",
+                    "3": "0",
+                    "rare": "0",
+                    "mythical": "0",
+                    "uncommon": "0",
+                    "legendary": "0"
+                },
+                "internalType": "uint256"
+            },
+            {
+                "name": "rare",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "legendary",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "mythical",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "constant": true,
+        "signature": "0x4a5d06f1",
+        "stateMutability": "view"
+    },
+    {
+        "name": "rankupQuest",
+        "type": "function",
+        "inputs": [
+            {
+                "name": "currentRank",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "signature",
+                "type": "bytes",
+                "internalType": "bytes"
+            }
+        ],
+        "outputs": [],
+        "signature": "0xc5b10c6e",
+        "stateMutability": "nonpayable"
+    },
+    {
+        "name": "rankupQuestAmount",
+        "type": "function",
+        "inputs": [
+            {
+                "name": "currentRank",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "signature",
+                "type": "bytes",
+                "internalType": "bytes"
+            },
+            {
+                "name": "questAmount",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "outputs": [],
+        "signature": "0x249ef851",
+        "stateMutability": "nonpayable"
+    },
+    {
+        "name": "renounceOwnership",
+        "type": "function",
+        "inputs": [],
+        "outputs": [],
+        "signature": "0x715018a6",
+        "stateMutability": "nonpayable"
+    },
+    {
+        "name": "setProbs",
+        "type": "function",
+        "inputs": [
+            {
+                "name": "uncommon",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "rare",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "legendary",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "mythical",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "outputs": [],
+        "signature": "0x829fab91",
+        "stateMutability": "nonpayable"
+    },
+    {
+        "name": "setSigner",
+        "type": "function",
+        "inputs": [
+            {
+                "name": "newSigner",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "outputs": [],
+        "signature": "0x6c19e783",
+        "stateMutability": "nonpayable"
+    },
+    {
+        "name": "signer",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address",
+                "value": "0x0000000000000000000000000000000000000000",
+                "internalType": "address"
+            }
+        ],
+        "constant": true,
+        "signature": "0x238ac933",
+        "stateMutability": "view"
+    },
+    {
+        "name": "transferOwnership",
+        "type": "function",
+        "inputs": [
+            {
+                "name": "newOwner",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "outputs": [],
+        "signature": "0xf2fde38b",
+        "stateMutability": "nonpayable"
+    }
+]
