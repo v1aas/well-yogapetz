@@ -43,9 +43,18 @@ class DatabaseManager:
         if count > 0:
             self.cursor.execute('''UPDATE accounts SET token = ? WHERE token = ?''', (new_token, old_token))
             self.commit_changes()
-            logger.success(f"Токен {old_token} успешно обновлен на {new_token}")
+            logger.success(f"Токен {old_token} успешно обновлен на {new_token} в таблице accounts")
         else:
-            logger.error(f"Ошибка: Токен {old_token} не найден в таблице.")
+            logger.error(f"Ошибка: Токен {old_token} не найден в таблице accounts.")
+            
+        self.cursor.execute('''SELECT COUNT(*) FROM books WHERE token = ?''', (old_token,))
+        count = self.cursor.fetchone()[0]
+        if count > 0:
+            self.cursor.execute('''UPDATE books SET token = ? WHERE token = ?''', (new_token, old_token))
+            self.commit_changes()
+            logger.success(f"Токен {old_token} успешно обновлен на {new_token} в таблице books")
+        else:
+            logger.error(f"Ошибка: Токен {old_token} не найден в таблице books.")
     
     def save_books(self, private_key, uncommon, rare, legendary, mythical):
         self.cursor.execute('''SELECT token FROM accounts WHERE private_key = ?''', (private_key,))
