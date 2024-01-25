@@ -328,7 +328,7 @@ async def complete_tasks_well():
             client = Client(WEB3, key)
             headers_for_login = await login_twitter_with_invite(token, proxy)
             if headers_for_login is None:
-                return
+                continue
             is_connect = connect_wallet(headers_for_login, client)
             if is_connect:
                 db_manager.save_account(token, client.private_key)
