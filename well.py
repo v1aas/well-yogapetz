@@ -127,7 +127,6 @@ async def login_twitter_with_invite(token, proxy):
             logger.error(f"Ошибка - login_twitter. {e}")
             save_errors(f"Ошибка - login_twitter. {e}")
             return None
-
         
 async def get_headers(token, proxy):
     logger.info(f"Начинаю логин в твиттер")
@@ -214,6 +213,30 @@ def get_num_daily_tweet(headers_for_login):
     else:
         logger.error("Ошибка при получении название дейли квеста")
 
+def get_uncomplete_tasks(headers_for_login):
+    tasks = []
+    response = requests.get("https://api.gm.io/ygpz/me", headers=headers_for_login)
+    if response.status_code == 200:
+        raw_tasks = response.json()['ygpzQuesting']['rawSpecialProgress']
+        if 'follow-gmio' not in raw_tasks:
+            tasks.append("follows")
+            logger.info("Задание с подписками было не выполнено")
+        if 'retweet-CyberKongz-1750535387095691606' not in raw_tasks:
+            tasks.append("like_retweet3")
+            logger.info("Задание лайк+ретвит#3 был не выполнено")
+        if 'retweet-yogapetz-1750523880463340019' not in raw_tasks:
+            tasks.append("like_retweet2")
+            logger.info("Задание лайк+ретвит#2 было не выполнено")
+        if 'retweet-yogapetz-1745127428039847937' not in raw_tasks:
+            tasks.append("like_retweet")
+            logger.info("Задание лайк+ретвит#1 было не выполнено")
+        if 'set-well-twitter-profile-banner' not in raw_tasks:
+            tasks.append("set_banner")
+            logger.info("Задание с баннером не выполнено")
+        return tasks
+    else:
+        logger.error("Ошибка при проверки заданий")
+
 def complete_breath_session(headers_for_login):
     response = requests.post("https://api.gm.io/ygpz/complete-breath-session", json={}, headers=headers_for_login)
     if response.status_code == 200:
@@ -253,8 +276,15 @@ def like_retweet(headers_for_login):
     else:
         logger.error(f"Ошибка при за лайк+ретвит #1. {response.status_code}. {response.text}")
     
+def like_retweet2(headers_for_login):
+    response = requests.post("https://api.gm.io/ygpz/claim-exp/retweet-yogapetz-1750523880463340019", json={}, headers=headers_for_login)
+    if response.status_code == 200:
+        logger.success("Клейм за лайк+ретвит #2 успешен!")
+    else:
+        logger.error(f"Ошибка при за лайк+ретвит #2. {response.status_code}. {response.text}")
+    
 def like_retweet3(headers_for_login):
-    response = requests.post("https://api.gm.io/ygpz/claim-exp/retweet-yogapetz-1749049904889213387", json={}, headers=headers_for_login)
+    response = requests.post("https://api.gm.io/ygpz/claim-exp/retweet-CyberKongz-1750535387095691606", json={}, headers=headers_for_login)
     if response.status_code == 200:
         logger.success("Клейм за лайк+ретвит #3 успешен!")
     else:
@@ -279,7 +309,7 @@ def follows(headers_for_login):
     else:
         logger.error(f"Ошибка при за подписку #2. {response.status_code}. {response.text}")
     
-async def complete_task_twitter(token, proxy):
+async def complete_task_twitter(token, proxy, tasks = None):
     async def set_banner(twitter):
         logger.info("Ставлю баннер")
         image = open("data/1500x500.jpg", "rb").read()
@@ -290,19 +320,39 @@ async def complete_task_twitter(token, proxy):
         else: 
             logger.error("Ошибка. Баннер не поставлен")
     
-    async def like_retweet1(twitter):
+    async def like_retweet(twitter):
         logger.info("Лайк+ретвит #1")
         logger.info(f"Твит 1 лайкнут: {await twitter.like('1745127428039847937')}")
         time.sleep(random.randint(2,4))
         logger.info(f"Твит 1 ретвитнут: {await twitter.repost('1745127428039847937')}")
     
+    async def like_retweet2(twitter):
+        logger.info("Лайк+ретвит #2")
+        logger.info(f"Твит 2 лайкнут: {await twitter.like('1750523880463340019')}")
+        time.sleep(random.randint(2,4))
+        logger.info(f"Твит 2 ретвитнут: {await twitter.repost('1750523880463340019')}")
+    
     async def like_retweet3(twitter):
         logger.info("Лайк+ретвит #3")
-        logger.info(f"Твит 3 лайкнут: {await twitter.like('1749049904889213387')}")
+        logger.info(f"Твит 3 лайкнут: {await twitter.like('1750535387095691606')}")
         time.sleep(random.randint(2,4))
-        logger.info(f"Твит 3 ретвитнут: {await twitter.repost('1749049904889213387')}")
-    
-    functions = [set_banner, like_retweet1, like_retweet3]
+        logger.info(f"Твит 3 ретвитнут: {await twitter.repost('1750535387095691606')}")
+        
+    functions = []
+    if tasks is None:
+        functions = [set_banner, like_retweet, like_retweet2, like_retweet3]
+    else:
+        for task in tasks:
+            if task is "follows":
+                continue
+            elif task is "set_banner":
+                functions.append(set_banner)
+            elif task is "like_retweet":
+                functions.append(like_retweet)
+            elif task is "like_retweet2":
+                functions.append(like_retweet2)
+            elif task is "like_retweet3":
+                functions.append(like_retweet3)
     try:
         async with TwitterClient(TwitterAccount(token), proxy=proxy, verify=False) as twitter:
             for func in functions:
@@ -340,6 +390,7 @@ async def complete_tasks_well():
                 (post_daily_tweet, [token, headers_for_login, proxy]),
                 (set_banner, [headers_for_login]),
                 (like_retweet, [headers_for_login]),
+                (like_retweet2, [headers_for_login]),
                 (like_retweet3, [headers_for_login]),
                 (follows, [headers_for_login]),
             ]
@@ -391,7 +442,49 @@ async def complete_daily_tasks():
             save_errors(f"Аккаунт заблокирован или поймал капчу. {token}")
         else:
             logger.error(f"Ошибка - login_twitter. {e}")
+            save_errors(f"Ошибка - login_twitter. {token}")
+
+async def check_and_complete_tasks():
+    try:
+        proxys = get_proxy()
+        proxy = next(proxys)
+        accounts = db_manager.get_accounts()
+        for index, acc in enumerate(accounts, start=1):
+            token = acc[0]
+            logger.info(f"Начинаю проверку выполненных заданий. {index}/{len(accounts)} {token}")
+            headers_for_login = await get_headers(token, proxy)
+            uncomplete_tasks = get_uncomplete_tasks(headers_for_login)
+            TASKS = []
+            if len(uncomplete_tasks) == 0:
+                logger.success(f"Все задания выполнены. {token}")
+                continue
+            else:
+                for task in uncomplete_tasks:
+                    if task is "set_banner":
+                        TASKS.append((set_banner, [headers_for_login]))
+                    elif task is "like_retweet":
+                        TASKS.append((like_retweet, [headers_for_login]))
+                    elif task is "like_retweet2":
+                        TASKS.append((like_retweet2, [headers_for_login]))
+                    elif task is "like_retweet3":
+                        TASKS.append((like_retweet3, [headers_for_login]))
+                    elif task is "follows":
+                        TASKS.append((follows, [headers_for_login]))
+            await complete_task_twitter(token=token, proxy=proxy, tasks=uncomplete_tasks)
+            for task, args in TASKS:
+                if asyncio.iscoroutinefunction(task):
+                    await task(*args)
+                else:
+                    task(*args)
+                random_sleep()
+            logger.success(f"Все задания выполнены. {token}")
+    except Exception as e:
+        if "'NoneType' object has no attribute 'get'" in e:
+            logger.error(f"Аккаунт заблокирован или поймал капчу. {token}")
             save_errors(f"Аккаунт заблокирован или поймал капчу. {token}")
+        else:
+            logger.error(f"Ошибка - check_and_complete_tasks. {e}")
+            save_errors(f"Ошибка - check_and_complete_tasks. {token}")
 
 def refresh_info_for_books():
     logger.info("Обновляю количество книг")
@@ -433,3 +526,4 @@ def intro():
     ╚════════════════════════════════════════╝
     """
     print(business_card)
+    

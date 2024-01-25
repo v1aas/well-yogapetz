@@ -2,7 +2,7 @@ import asyncio
 import inquirer
 from inquirer import prompt
 from manager_db import DatabaseManager
-from well import complete_tasks_well, complete_daily_tasks, update_invites, claim_books, get_all_stats_book, update_token, intro
+from well import complete_tasks_well, complete_daily_tasks, update_invites, claim_books, get_all_stats_book, update_token, intro, check_and_complete_tasks
 
 db_manager = DatabaseManager()
 db_manager.connect()
@@ -17,6 +17,7 @@ def main():
                         choices=[
                             'Выполнение всех заданий',
                             'Выполнение дейли заданий',
+                            'Проверка всех заданий',
                             'Минт книжек',
                             'Статистика всех книг на аккаунтах',
                             'Обновление инвайтов',
@@ -31,6 +32,8 @@ def main():
             asyncio.run(complete_tasks_well())
         elif choice == 'Выполнение дейли заданий':
             asyncio.run(complete_daily_tasks())
+        elif choice == 'Проверка всех заданий':
+            asyncio.run(check_and_complete_tasks())
         elif choice == 'Минт книжек':
             asyncio.run(claim_books())
         elif choice == 'Статистика всех книг на аккаунтах':
@@ -45,3 +48,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    
