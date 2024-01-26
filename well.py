@@ -343,15 +343,15 @@ async def complete_task_twitter(token, proxy, tasks = None):
         functions = [set_banner, like_retweet, like_retweet2, like_retweet3]
     else:
         for task in tasks:
-            if task is "follows":
+            if task == "follows":
                 continue
-            elif task is "set_banner":
+            elif task == "set_banner":
                 functions.append(set_banner)
-            elif task is "like_retweet":
+            elif task == "like_retweet":
                 functions.append(like_retweet)
-            elif task is "like_retweet2":
+            elif task == "like_retweet2":
                 functions.append(like_retweet2)
-            elif task is "like_retweet3":
+            elif task == "like_retweet3":
                 functions.append(like_retweet3)
     try:
         async with TwitterClient(TwitterAccount(token), proxy=proxy, verify=False) as twitter:
@@ -460,15 +460,15 @@ async def check_and_complete_tasks():
                 continue
             else:
                 for task in uncomplete_tasks:
-                    if task is "set_banner":
+                    if task == "set_banner":
                         TASKS.append((set_banner, [headers_for_login]))
-                    elif task is "like_retweet":
+                    elif task == "like_retweet":
                         TASKS.append((like_retweet, [headers_for_login]))
-                    elif task is "like_retweet2":
+                    elif task == "like_retweet2":
                         TASKS.append((like_retweet2, [headers_for_login]))
-                    elif task is "like_retweet3":
+                    elif task == "like_retweet3":
                         TASKS.append((like_retweet3, [headers_for_login]))
-                    elif task is "follows":
+                    elif task == "follows":
                         TASKS.append((follows, [headers_for_login]))
             await complete_task_twitter(token=token, proxy=proxy, tasks=uncomplete_tasks)
             for task, args in TASKS:
