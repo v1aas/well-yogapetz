@@ -176,18 +176,26 @@ async def get_headers(token, proxy):
             else:
                 logger.error(f"Ошибка при привязке твиттера. {response.status_code}. {response.text}")
             return headers_for_login
+    except AttributeError as e:
+        logger.error(f"Аккаунт заблокирован или поймал капчу. {token}")
+        save_errors(f"Аккаунт заблокирован или поймал капчу. {token}")
+        return None
     except Exception as e:
         if "'NoneType' object has no attribute 'get'" in e:
             logger.error(f"Аккаунт заблокирован или поймал капчу. {token}")
             save_errors(f"Аккаунт заблокирован или поймал капчу. {token}")
+            return None
         else:
             logger.error(f"Ошибка - login_twitter. {e}")
-            save_errors(f"Аккаунт заблокирован или поймал капчу. {token}")
+            save_errors(f"Ошибка - login_twitter. {e}")
+            return None
         
 async def update_invites():
     proxys = get_proxy()
     for acc in db_manager.get_accounts():
         headers = await get_headers(acc[0], next(proxys))
+        if headers is None:
+            continue
         response = requests.post("https://api.gm.io/ygpz/generate-codes", headers=headers, json={})
         if response.status_code == 200:
             logger.success(f"Инвайты успешно созданы")
@@ -421,6 +429,8 @@ async def complete_daily_tasks():
             key = acc[1]
             logger.info(f"Начинаю выполнять дневные задания. {index}/{len(accounts)} {token}")
             headers_for_login = await get_headers(token, proxy)
+            if headers_for_login is None:
+                continue
 
             TASKS = [
                 (complete_breath_session, [headers_for_login]),
@@ -453,6 +463,8 @@ async def check_and_complete_tasks():
             token = acc[0]
             logger.info(f"Начинаю проверку выполненных заданий. {index}/{len(accounts)} {token}")
             headers_for_login = await get_headers(token, proxy)
+            if headers_for_login is None:
+                continue
             uncomplete_tasks = get_uncomplete_tasks(headers_for_login)
             TASKS = []
             if len(uncomplete_tasks) == 0:
@@ -506,6 +518,8 @@ async def claim_books():
         token = acc[0]
         key = acc[1]
         headers_for_login = await get_headers(token, proxy)
+        if headers_for_login is None:
+            continue
         logger.info(f"Начинаю выполнять клеймить книжки. {token}")
         claim_rank_insights(headers_for_login, Client(WEB3, key))
 
