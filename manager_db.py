@@ -56,6 +56,21 @@ class DatabaseManager:
         else:
             logger.error(f"Ошибка: Токен {old_token} не найден в таблице books.")
     
+    def delete_accout(self, old_token):
+        self.cursor.execute('''DELETE FROM accounts WHERE token = ?''', (old_token,))
+        if self.cursor.rowcount > 0:
+            self.commit_changes()
+            logger.success(f"Токен {old_token} успешно удален из таблицы accounts")
+        else:
+            logger.error(f"Ошибка: Токен {old_token} не найден в таблице accounts.")
+
+        self.cursor.execute('''DELETE FROM books WHERE token = ?''', (old_token,))
+        if self.cursor.rowcount > 0:
+            self.commit_changes()
+            logger.success(f"Токен {old_token} успешно удален из таблицы books")
+        else:
+            logger.error(f"Ошибка: Токен {old_token} не найден в таблице books.")
+    
     def save_books(self, private_key, uncommon, rare, legendary, mythical):
         self.cursor.execute('''SELECT token FROM accounts WHERE private_key = ?''', (private_key,))
         token = self.cursor.fetchone()[0]
