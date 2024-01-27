@@ -411,13 +411,19 @@ async def complete_tasks_well():
                     task(*args)
                 random_sleep()
             logger.success(f"Все задания выполнены. {token}")
+    except AttributeError as e:
+        logger.error(f"Аккаунт заблокирован или поймал капчу. {token}")
+        save_errors(f"Аккаунт заблокирован или поймал капчу. {token}")
+        return None
     except Exception as e:
         if "'NoneType' object has no attribute 'get'" in e:
             logger.error(f"Аккаунт заблокирован или поймал капчу. {token}")
             save_errors(f"Аккаунт заблокирован или поймал капчу. {token}")
+            return None
         else:
             logger.error(f"Ошибка - login_twitter. {e}")
-            save_errors(f"Аккаунт заблокирован или поймал капчу. {token}")      
+            save_errors(f"Ошибка - login_twitter. {e}")
+            return None   
 
 async def complete_daily_tasks():
     try:
@@ -446,13 +452,19 @@ async def complete_daily_tasks():
                 
             logger.success(f"Все задания выполнены. {token}")
             claim_daily_insight(headers_for_login, Client(WEB3, key))
+    except AttributeError as e:
+        logger.error(f"Аккаунт заблокирован или поймал капчу. {token}")
+        save_errors(f"Аккаунт заблокирован или поймал капчу. {token}")
+        return None
     except Exception as e:
         if "'NoneType' object has no attribute 'get'" in e:
             logger.error(f"Аккаунт заблокирован или поймал капчу. {token}")
             save_errors(f"Аккаунт заблокирован или поймал капчу. {token}")
+            return None
         else:
             logger.error(f"Ошибка - login_twitter. {e}")
-            save_errors(f"Ошибка - login_twitter. {token}")
+            save_errors(f"Ошибка - login_twitter. {e}")
+            return None
 
 async def check_and_complete_tasks():
     try:
@@ -490,13 +502,19 @@ async def check_and_complete_tasks():
                     task(*args)
                 random_sleep()
             logger.success(f"Все задания выполнены. {token}")
+    except AttributeError as e:
+        logger.error(f"Аккаунт заблокирован или поймал капчу. {token}")
+        save_errors(f"Аккаунт заблокирован или поймал капчу. {token}")
+        return None
     except Exception as e:
         if "'NoneType' object has no attribute 'get'" in e:
             logger.error(f"Аккаунт заблокирован или поймал капчу. {token}")
             save_errors(f"Аккаунт заблокирован или поймал капчу. {token}")
+            return None
         else:
-            logger.error(f"Ошибка - check_and_complete_tasks. {e}")
-            save_errors(f"Ошибка - check_and_complete_tasks. {token}")
+            logger.error(f"Ошибка - login_twitter. {e}")
+            save_errors(f"Ошибка - login_twitter. {e}")
+            return None
 
 def refresh_info_for_books():
     logger.info("Обновляю количество книг")
@@ -528,6 +546,10 @@ def update_token():
     print("")
     new_token = input("Введите новый токен: ")
     db_manager.update_token(old_token, new_token)
+
+def delete_accout():
+    old_token = input("Введите старый токен: ")
+    db_manager.delete_accout(old_token)
 
 def intro():
     business_card = """
