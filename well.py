@@ -51,6 +51,10 @@ def get_tokens():
     with open('data/tokens.txt', 'r') as file:
         return [line.strip() for line in file.readlines()]
 
+def get_tokens_change():
+    with open('data/tokens_change.txt', 'r') as file:
+        return [line.strip() for line in file.readlines()]
+
 def get_keys():
     with open('data/keys.txt', 'r') as file:
         return [line.strip() for line in file.readlines()]
@@ -91,6 +95,7 @@ async def login_twitter_with_invite(token, proxy):
                 'authorization': id_token,
                 'origin': 'https://well3.com',
                 'referer': 'https://well3.com/',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             }
             json = {
                 "oauth":{
@@ -176,19 +181,18 @@ async def get_headers(token, proxy):
             else:
                 logger.error(f"Ошибка при привязке твиттера. {response.status_code}. {response.text}")
             return headers_for_login
+    except UnboundLocalError as e:
+        logger.error(f"Ошибка - login_twitter. {e}")
+        save_errors(f"Ошибка - login_twitter. {e}")
+        return None
     except AttributeError as e:
         logger.error(f"Аккаунт заблокирован или поймал капчу. {token}")
         save_errors(f"Аккаунт заблокирован или поймал капчу. {token}")
         return None
     except Exception as e:
-        if "'NoneType' object has no attribute 'get'" in e:
-            logger.error(f"Аккаунт заблокирован или поймал капчу. {token}")
-            save_errors(f"Аккаунт заблокирован или поймал капчу. {token}")
-            return None
-        else:
-            logger.error(f"Ошибка - login_twitter. {e}")
-            save_errors(f"Ошибка - login_twitter. {e}")
-            return None
+        logger.error(f"Ошибка - login_twitter. {e}")
+        save_errors(f"Ошибка - login_twitter. {e}")
+        return None
         
 async def update_invites():
     proxys = get_proxy()
@@ -546,6 +550,12 @@ def update_token():
     print("")
     new_token = input("Введите новый токен: ")
     db_manager.update_token(old_token, new_token)
+
+def update_batch_token():
+    change_tokens = get_tokens_change()
+    for tokens in change_tokens:
+        token = tokens.split(';')
+        db_manager.update_token(token[0], token[1])
 
 def delete_accout():
     old_token = input("Введите старый токен: ")
