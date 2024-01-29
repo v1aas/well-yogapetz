@@ -5,6 +5,7 @@ import random
 import itertools
 from loguru import logger
 from client import Client
+from fake_useragent import UserAgent
 from manager_db import DatabaseManager
 from better_automation.twitter import TwitterAccount, TwitterClient
 from better_automation.utils import set_windows_selector_event_loop_policy
@@ -13,6 +14,7 @@ from well_web3 import connect_wallet, claim_daily_insight, claim_rank_insights, 
 set_windows_selector_event_loop_policy()
 db_manager = DatabaseManager()
 db_manager.connect()
+user_agent = UserAgent()
 
 def save_errors(error):
     with open('errors.txt', 'a', encoding='utf-8') as file:
@@ -95,7 +97,7 @@ async def login_twitter_with_invite(token, proxy):
                 'authorization': id_token,
                 'origin': 'https://well3.com',
                 'referer': 'https://well3.com/',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                'User-Agent': user_agent.random
             }
             json = {
                 "oauth":{
@@ -168,6 +170,7 @@ async def get_headers(token, proxy):
                 'authorization': id_token,
                 'origin': 'https://well3.com',
                 'referer': 'https://well3.com/',
+                'User-Agent': user_agent.random
             }
             json = {
                 "oauth":{
