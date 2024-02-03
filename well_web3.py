@@ -8,7 +8,7 @@ from loguru import logger
 from manager_db import DatabaseManager
 from eth_account.messages import encode_defunct
 from web3.middleware import geth_poa_middleware
-
+from utilities import to_proxy_format
 
 with open('data/contract_abi.json', 'r') as file:
     ABI = json.load(file)
@@ -33,7 +33,7 @@ def get_eip1559_gas(web3):
     max_fee_per_gas = int(latest_block['baseFeePerGas']) + max_fee_priotiry_gas
     return max_fee_priotiry_gas, max_fee_per_gas
 
-def connect_wallet(headers_for_login, client: Client):
+def connect_wallet(headers_for_login, client: Client, proxy):
     msg = f"Welcome to Yogapetz\nClick \"Sign\" to continue.\n\nTimestamp:\n{time.time()}"
     message = encode_defunct(text=msg)
     signed_message = client.web3.eth.account.sign_message(message, private_key=client.private_key)
@@ -45,7 +45,7 @@ def connect_wallet(headers_for_login, client: Client):
         "msg": msg
     }
     
-    response = requests.post("https://api.gm.io/ygpz/link-wallet", json=json, headers=headers_for_login)
+    response = requests.post("https://api.gm.io/ygpz/link-wallet", json=json, headers=headers_for_login, proxies=to_proxy_format(proxy))
     if response.status_code == 200:
         logger.success("Кошелек успешно привязан!")
         return True
@@ -53,8 +53,8 @@ def connect_wallet(headers_for_login, client: Client):
         logger.error(f"Ошибка при привязке кошелька. {response.status_code}. {response.text}")
         return False
         
-def check_daily_insight(headers_for_login):
-        response = requests.get("https://api.gm.io/ygpz/me", headers=headers_for_login)
+def check_daily_insight(headers_for_login, proxy):
+        response = requests.get("https://api.gm.io/ygpz/me", headers=headers_for_login, proxies=to_proxy_format(proxy))
         if response.status_code == 200:
             logger.info("Проверка дейли книжки успешна")
             daily_quest_nonce = response.json()['contractInfo']['dailyQuest']['nonce']
@@ -65,11 +65,11 @@ def check_daily_insight(headers_for_login):
             logger.error("Ошибка при проверке дейли книжки")
             return True, None, None
 
-def claim_daily_insight(headers_for_login, client: Client):
+def claim_daily_insight(headers_for_login, client: Client, proxy):
     if not check_balance(client):
         logger.error("На этом кошельке нет баланса")
         return
-    used, daily_quest_nonce, signature = check_daily_insight(headers_for_login)
+    used, daily_quest_nonce, signature = check_daily_insight(headers_for_login, proxy)
     if used and daily_quest_nonce is not None and signature is not None:
         logger.error("Дейли книжка была заминчена или возникла ошибка!")
         return
@@ -99,8 +99,8 @@ def claim_daily_insight(headers_for_login, client: Client):
     except Exception as e:
         logger.error(f"Ошибка {e}")
 
-def check_rank_insights(headers_for_login, client: Client):
-    response = requests.get("https://api.gm.io/ygpz/me", headers=headers_for_login)
+def check_rank_insights(headers_for_login, client: Client, proxy):
+    response = requests.get("https://api.gm.io/ygpz/me", headers=headers_for_login, proxies=to_proxy_format(proxy))
     if response.status_code == 200:
         logger.info("Проверка количества книжек успешна")
         current_rank = response.json()['contractInfo']['rankupQuest']['currentRank']
@@ -111,11 +111,11 @@ def check_rank_insights(headers_for_login, client: Client):
         logger.error("Ошибка при проверке доступных книжек")
         return None, None, None
     
-def claim_rank_insights(headers_for_login, client: Client):
+def claim_rank_insights(headers_for_login, client: Client, proxy):
     if not check_balance(client):
         logger.error("На этом кошельке нет баланса")
         return
-    current_rank, quest_amount, signature = check_rank_insights(headers_for_login, client)
+    current_rank, quest_amount, signature = check_rank_insights(headers_for_login, client, proxy)
     if quest_amount is None or quest_amount == 0:
         logger.info(f"Доступных к минту книжек нет! {quest_amount}")
         return
@@ -143,6 +143,7 @@ def claim_rank_insights(headers_for_login, client: Client):
             logger.success(f"Транзакция прошла успешно! Клейм книжек успешен! {client.address}")
             sec = random.randint(30, 60)
             logger.info(f"Сплю {sec} перед следующим кошельком")
+            time.sleep(sec)
         else:
             logger.error(f"Ошибка. Статус: {receipt['status']}")
     except Exception as e:

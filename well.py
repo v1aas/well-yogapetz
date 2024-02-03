@@ -2,7 +2,6 @@ import requests
 import time
 import asyncio
 import random
-import itertools
 from loguru import logger
 from client import Client
 from fake_useragent import UserAgent
@@ -10,56 +9,12 @@ from manager_db import DatabaseManager
 from better_automation.twitter import TwitterAccount, TwitterClient
 from better_automation.utils import set_windows_selector_event_loop_policy
 from well_web3 import connect_wallet, claim_daily_insight, claim_rank_insights, save_results, WEB3
+from utilities import get_invite, save_errors, save_invite, get_keys, get_proxy, get_tokens, get_tokens_change, get_random_daily_tweet, random_sleep, to_proxy_format
 
 set_windows_selector_event_loop_policy()
 db_manager = DatabaseManager()
 db_manager.connect()
 user_agent = UserAgent()
-
-def save_errors(error):
-    with open('errors.txt', 'a', encoding='utf-8') as file:
-        file.write(f"\n{error}")
-
-def get_invite():
-    with open("data/invites.txt", 'r+', encoding='utf-8') as file:
-        invites = file.readlines()
-        if invites:
-            invite = invites.pop(0)
-            file.seek(0)
-            file.truncate()
-            file.writelines(invites)
-            return invite.strip()
-        else:
-            raise FileNotFoundError("Файл с инвайтами пустой!")       
-
-def save_invite(new_invite):
-    with open("data/invites.txt", 'a', encoding='utf-8') as file:
-        file.write(f"{new_invite}\n")
-
-def get_random_daily_tweet():
-    with open ("data/daily_tweets.txt", 'r', encoding='utf-8') as file:
-        return random.choice(file.readlines())
-
-def random_sleep():
-    sec = random.randint(3,5)
-    logger.info(f"Жду {sec} до выполнения следующего задания")
-    time.sleep(sec)
-
-def get_proxy():
-    with open('data/proxy.txt', 'r') as file:
-        return itertools.cycle([line.strip() for line in file.readlines()])
-
-def get_tokens():
-    with open('data/tokens.txt', 'r') as file:
-        return [line.strip() for line in file.readlines()]
-
-def get_tokens_change():
-    with open('data/tokens_change.txt', 'r') as file:
-        return [line.strip() for line in file.readlines()]
-
-def get_keys():
-    with open('data/keys.txt', 'r') as file:
-        return [line.strip() for line in file.readlines()]
 
 async def login_twitter_with_invite(token, proxy):
     logger.info(f"Начинаю логин в твиттер с инвайтом")
@@ -73,7 +28,7 @@ async def login_twitter_with_invite(token, proxy):
         'referer': 'https://well3.com/',
         'x-client-version': 'Chrome/Handler/2.20.2/FirebaseCore-web'
     }
-    response_for_google = requests.post("https://www.googleapis.com/identitytoolkit/v3/relyingparty/createAuthUri?key=AIzaSyBPmETcQFfpDrw_eB6s8DCkDpYYBt3e8Wg", json=json, headers=headers_for_login)
+    response_for_google = requests.post("https://www.googleapis.com/identitytoolkit/v3/relyingparty/createAuthUri?key=AIzaSyBPmETcQFfpDrw_eB6s8DCkDpYYBt3e8Wg", json=json, headers=headers_for_login, proxies=to_proxy_format(proxy))
     oauth_token = response_for_google.json()['authUri'].split('=')[1]
     session_id = response_for_google.json()['sessionId']
     invite = get_invite()
@@ -86,7 +41,7 @@ async def login_twitter_with_invite(token, proxy):
                 "returnSecureToken": True,
                 "returnIdpCredential": True
             }
-            response = requests.post("https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=AIzaSyBPmETcQFfpDrw_eB6s8DCkDpYYBt3e8Wg", json=json)
+            response = requests.post("https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=AIzaSyBPmETcQFfpDrw_eB6s8DCkDpYYBt3e8Wg", json=json, proxies=to_proxy_format(proxy))
             if response.status_code == 200:
                 id_token = response.json()['idToken']
                 oauth_access_token = response.json()['oauthAccessToken']
@@ -105,17 +60,17 @@ async def login_twitter_with_invite(token, proxy):
                     "oauthTokenSecret": oauth_token_secret
                 }
             }
-            response = requests.post("https://api.gm.io/ygpz/link-twitter", headers=headers_for_login, json=json)
+            response = requests.post("https://api.gm.io/ygpz/link-twitter", headers=headers_for_login, json=json, proxies=to_proxy_format(proxy))
             if response.status_code == 200:
                 logger.success("Твиттер успешно привязан")
             else:
                 logger.error(f"Ошибка при привязке твиттера. {response.status_code}. {response.text}")
-            response = requests.post("https://api.gm.io/ygpz/enter-referral-code", headers=headers_for_login, json={"code":invite})
+            response = requests.post("https://api.gm.io/ygpz/enter-referral-code", headers=headers_for_login, json={"code":invite}, proxies=to_proxy_format(proxy))
             if response.status_code == 200:
                 logger.success(f"Инвайт {invite} успешно привязан")
             else:
                 logger.error(f"Ошибка при привязке инвайта. {response.status_code}. {response.text}")
-            response = requests.post("https://api.gm.io/ygpz/generate-codes", headers=headers_for_login, json={})
+            response = requests.post("https://api.gm.io/ygpz/generate-codes", headers=headers_for_login, json={}, proxies=to_proxy_format(proxy))
             if response.status_code == 200:
                 logger.success(f"Инвайты успешно созданы")
             else:
@@ -148,7 +103,7 @@ async def get_headers(token, proxy):
         'x-client-version': 'Chrome/Handler/2.20.2/FirebaseCore-web'
     }
     try:
-        response_for_google = requests.post("https://www.googleapis.com/identitytoolkit/v3/relyingparty/createAuthUri?key=AIzaSyBPmETcQFfpDrw_eB6s8DCkDpYYBt3e8Wg", json=json, headers=headers_for_login)
+        response_for_google = requests.post("https://www.googleapis.com/identitytoolkit/v3/relyingparty/createAuthUri?key=AIzaSyBPmETcQFfpDrw_eB6s8DCkDpYYBt3e8Wg", json=json, headers=headers_for_login, proxies=to_proxy_format(proxy))
         oauth_token = response_for_google.json()['authUri'].split('=')[1]
         session_id = response_for_google.json()['sessionId']
         async with TwitterClient(TwitterAccount(token), proxy=proxy, verify=False) as twitter:
@@ -159,7 +114,7 @@ async def get_headers(token, proxy):
                 "returnSecureToken": True,
                 "returnIdpCredential": True
             }
-            response = requests.post("https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=AIzaSyBPmETcQFfpDrw_eB6s8DCkDpYYBt3e8Wg", json=json)
+            response = requests.post("https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=AIzaSyBPmETcQFfpDrw_eB6s8DCkDpYYBt3e8Wg", json=json, proxies=to_proxy_format(proxy))
             if response.status_code == 200:
                 id_token = response.json()['idToken']
                 oauth_access_token = response.json()['oauthAccessToken']
@@ -178,7 +133,7 @@ async def get_headers(token, proxy):
                     "oauthTokenSecret": oauth_token_secret
                 }
             }
-            response = requests.post("https://api.gm.io/ygpz/link-twitter", headers=headers_for_login, json=json)
+            response = requests.post("https://api.gm.io/ygpz/link-twitter", headers=headers_for_login, json=json, proxies=to_proxy_format(proxy))
             if response.status_code == 200:
                 logger.success("Твиттер успешно привязан")
             else:
@@ -200,15 +155,16 @@ async def get_headers(token, proxy):
 async def update_invites():
     proxys = get_proxy()
     for acc in db_manager.get_accounts():
-        headers = await get_headers(acc[0], next(proxys))
+        proxy = next(proxys)
+        headers = await get_headers(acc[0], proxy)
         if headers is None:
             continue
-        response = requests.post("https://api.gm.io/ygpz/generate-codes", headers=headers, json={})
+        response = requests.post("https://api.gm.io/ygpz/generate-codes", headers=headers, json={}, proxies=to_proxy_format(proxy))
         if response.status_code == 200:
             logger.success(f"Инвайты успешно созданы")
         else:
             logger.error(f"Ошибка при создании инвайтов. {response.status_code}. {response.text}")
-        response = requests.get("https://api.gm.io/ygpz/me", headers=headers)
+        response = requests.get("https://api.gm.io/ygpz/me", headers=headers, proxies=to_proxy_format(proxy))
         if response.status_code == 200:
             invites = response.json()['referralInfo']['myReferralCodes']
             for new_invite in invites:
@@ -220,48 +176,57 @@ async def update_invites():
             logger.error(f"Ошибка при сохранении инвайтов. {acc[0]}")
         logger.success("Инвайты успешно сохранены")
 
-def get_num_daily_tweet(headers_for_login):
-    response = requests.get("https://api.gm.io/ygpz/me", headers=headers_for_login)
+def get_num_daily_tweet(headers_for_login, proxy):
+    response = requests.get("https://api.gm.io/ygpz/me", headers=headers_for_login, proxies=to_proxy_format(proxy))
     if response.status_code == 200:
         daily = response.json()['contractInfo']['dailyQuest']['nonce'].split('-')
         return list(daily)[2]
     else:
         logger.error("Ошибка при получении название дейли квеста")
 
-def get_uncomplete_tasks(headers_for_login):
+def get_uncomplete_tasks(headers_for_login, proxy):
     tasks = []
-    response = requests.get("https://api.gm.io/ygpz/me", headers=headers_for_login)
+    response = requests.get("https://api.gm.io/ygpz/me", headers=headers_for_login, proxies=to_proxy_format(proxy))
     if response.status_code == 200:
         raw_tasks = response.json()['ygpzQuesting']['rawSpecialProgress']
-        if 'follow-gmio' not in raw_tasks:
-            tasks.append("follows")
-            logger.info("Задание с подписками было не выполнено")
         if 'retweet-CyberKongz-1750535387095691606' not in raw_tasks:
-            tasks.append("like_retweet3")
+            tasks.append(like_retweet3)
             logger.info("Задание лайк+ретвит#3 был не выполнено")
         if 'retweet-yogapetz-1750523880463340019' not in raw_tasks:
-            tasks.append("like_retweet2")
+            tasks.append(like_retweet2)
             logger.info("Задание лайк+ретвит#2 было не выполнено")
         if 'retweet-yogapetz-1745127428039847937' not in raw_tasks:
-            tasks.append("like_retweet")
+            tasks.append(like_retweet)
             logger.info("Задание лайк+ретвит#1 было не выполнено")
         if 'set-well-twitter-profile-banner' not in raw_tasks:
-            tasks.append("set_banner")
+            tasks.append(set_banner)
             logger.info("Задание с баннером не выполнено")
+        if 'retweet-yogapetz-1752693511433093285' not in raw_tasks:
+            tasks.append(like_retweet4)
+            logger.info("Задание лайк+ретвит#4 было не выполнено")
+        if 'join-eesee' not in raw_tasks:
+            tasks.append(join_eesee)
+            logger.info("Задание присоединиться к eesee было не выполнено")
+        if 'share-phaver-holder' not in raw_tasks:
+            tasks.append(share_phaver_holder)
+            logger.info("Задание share-phaver-holder было не выполнено")
+        if 'share-phaver-open' not in raw_tasks:
+            tasks.append(share_phaver_open)
+            logger.info("Задание share-phaver-open было не выполнено")
         return tasks
     else:
         logger.error("Ошибка при проверки заданий")
 
-def complete_breath_session(headers_for_login):
-    response = requests.post("https://api.gm.io/ygpz/complete-breath-session", json={}, headers=headers_for_login)
+def complete_breath_session(headers_for_login, proxy):
+    response = requests.post("https://api.gm.io/ygpz/complete-breath-session", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
     if response.status_code == 200:
         logger.success("Клейм за ежедневную метидацию успешен!")
     else:
         logger.error(f"Ошибка при клейме ежедневной метидации. {response.status_code}. {response.text}")
 
 async def post_daily_tweet(token, headers_for_login, proxy):
-    num = get_num_daily_tweet(headers_for_login)
-    response = requests.post(f"https://api.gm.io/ygpz/claim-exp/{num}-post-daily-yoga-photo", json={}, headers=headers_for_login)
+    num = get_num_daily_tweet(headers_for_login, proxy)
+    response = requests.post(f"https://api.gm.io/ygpz/claim-exp/{num}-post-daily-yoga-photo", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
     if response.status_code == 400:
         return
     try:
@@ -277,48 +242,76 @@ async def post_daily_tweet(token, headers_for_login, proxy):
         logger.error(f"Ошибка - post_daily_tweet|{e}|{token}")
         save_errors(f"Ошибка - post_daily_tweet|{e}|{token}")
     
-def set_banner(headers_for_login):
-    response = requests.post("https://api.gm.io/ygpz/claim-exp/set-well-twitter-profile-banner", json={}, headers=headers_for_login)
+def set_banner(headers_for_login, proxy):
+    response = requests.post("https://api.gm.io/ygpz/claim-exp/set-well-twitter-profile-banner", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
     if response.status_code == 200:
         logger.success("Клейм за баннер успешен!")
     else:
         logger.error(f"Ошибка при за баннер. {response.status_code}. {response.text}")
     
-def like_retweet(headers_for_login):
-    response = requests.post("https://api.gm.io/ygpz/claim-exp/retweet-yogapetz-1745127428039847937", json={}, headers=headers_for_login)
+def like_retweet(headers_for_login, proxy):
+    response = requests.post("https://api.gm.io/ygpz/claim-exp/retweet-yogapetz-1745127428039847937", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
     if response.status_code == 200:
         logger.success("Клейм за лайк+ретвит #1 успешен!")
     else:
         logger.error(f"Ошибка при за лайк+ретвит #1. {response.status_code}. {response.text}")
     
-def like_retweet2(headers_for_login):
-    response = requests.post("https://api.gm.io/ygpz/claim-exp/retweet-yogapetz-1750523880463340019", json={}, headers=headers_for_login)
+def like_retweet2(headers_for_login, proxy):
+    response = requests.post("https://api.gm.io/ygpz/claim-exp/retweet-yogapetz-1750523880463340019", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
     if response.status_code == 200:
         logger.success("Клейм за лайк+ретвит #2 успешен!")
     else:
         logger.error(f"Ошибка при за лайк+ретвит #2. {response.status_code}. {response.text}")
     
-def like_retweet3(headers_for_login):
-    response = requests.post("https://api.gm.io/ygpz/claim-exp/retweet-CyberKongz-1750535387095691606", json={}, headers=headers_for_login)
+def like_retweet3(headers_for_login, proxy):
+    response = requests.post("https://api.gm.io/ygpz/claim-exp/retweet-CyberKongz-1750535387095691606", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
     if response.status_code == 200:
         logger.success("Клейм за лайк+ретвит #3 успешен!")
     else:
         logger.error(f"Ошибка при за лайк+ретвит #3. {response.status_code}. {response.text}")
     
-def follows(headers_for_login):
-    response = requests.post("https://api.gm.io/ygpz/claim-exp/follow-yogapetz", json={}, headers=headers_for_login)
+def like_retweet4(headers_for_login, proxy):
+    response = requests.post("https://api.gm.io/ygpz/claim-exp/retweet-yogapetz-1752693511433093285", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
+    if response.status_code == 200:
+        logger.success("Клейм за лайк+ретвит #4 успешен!")
+    else:
+        logger.error(f"Ошибка при за лайк+ретвит #4. {response.status_code}. {response.text}")
+    
+def join_eesee(headers_for_login, proxy):
+    response = requests.post("https://api.gm.io/ygpz/claim-exp/join-eesee", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
+    if response.status_code == 200:
+        logger.success("Клейм за join-eesee успешен!")
+    else:
+        logger.error(f"Ошибка при join-eesee. {response.status_code}. {response.text}")
+
+def share_phaver_holder(headers_for_login, proxy):
+    response = requests.post("https://api.gm.io/ygpz/claim-exp/share-phaver-holder", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
+    if response.status_code == 200:
+        logger.success("Клейм за share-phaver-holder успешен!")
+    else:
+        logger.error(f"Ошибка при share-phaver-holder. {response.status_code}. {response.text}")
+        
+def share_phaver_open(headers_for_login, proxy):
+    response = requests.post("https://api.gm.io/ygpz/claim-exp/share-phaver-open", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
+    if response.status_code == 200:
+        logger.success("Клейм за share-phaver-open успешен!")
+    else:
+        logger.error(f"Ошибка при share-phaver-open. {response.status_code}. {response.text}")
+    
+def follows(headers_for_login, proxy):
+    response = requests.post("https://api.gm.io/ygpz/claim-exp/follow-yogapetz", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
     if response.status_code == 200:
         logger.success("Клейм за подписку #1 успешен!")
     else:
         logger.error(f"Ошибка при за подписку #1. {response.status_code}. {response.text}")
     time.sleep(random.randrange(3,5))
-    response = requests.post("https://api.gm.io/ygpz/claim-exp/follow-keung", json={}, headers=headers_for_login)
+    response = requests.post("https://api.gm.io/ygpz/claim-exp/follow-keung", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
     if response.status_code == 200:
         logger.success("Клейм за подписку #2 успешен!")
     else:
         logger.error(f"Ошибка при за подписку #2. {response.status_code}. {response.text}")
     time.sleep(random.randrange(3,5))
-    response = requests.post("https://api.gm.io/ygpz/claim-exp/follow-gmio", json={}, headers=headers_for_login)
+    response = requests.post("https://api.gm.io/ygpz/claim-exp/follow-gmio", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
     if response.status_code == 200:
         logger.success("Клейм за подписку #3 успешен!")
     else:
@@ -394,20 +387,20 @@ async def complete_tasks_well():
             headers_for_login = await login_twitter_with_invite(token, proxy)
             if headers_for_login is None:
                 continue
-            is_connect = connect_wallet(headers_for_login, client)
+            is_connect = connect_wallet(headers_for_login, client, proxy)
             if is_connect:
                 db_manager.save_account(token, client.private_key)
             else:
                 save_errors(f"Ошибка при привязке кошелька: {token};{client.address}")
             TASKS = [
                 (complete_task_twitter, [token, proxy]),
-                (complete_breath_session, [headers_for_login]),
+                (complete_breath_session, [headers_for_login, proxy]),
                 (post_daily_tweet, [token, headers_for_login, proxy]),
-                (set_banner, [headers_for_login]),
-                (like_retweet, [headers_for_login]),
-                (like_retweet2, [headers_for_login]),
-                (like_retweet3, [headers_for_login]),
-                (follows, [headers_for_login]),
+                (set_banner, [headers_for_login, proxy]),
+                (like_retweet, [headers_for_login, proxy]),
+                (like_retweet2, [headers_for_login, proxy]),
+                (like_retweet3, [headers_for_login, proxy]),
+                (follows, [headers_for_login, proxy]),
             ]
             logger.info("Начинаю выполнять задания")
             time.sleep(0.5)
@@ -435,30 +428,27 @@ async def complete_tasks_well():
 async def complete_daily_tasks():
     try:
         proxys = get_proxy()
-        proxy = next(proxys)
         accounts = db_manager.get_accounts()
         for index, acc in enumerate(accounts, start=1):
+            proxy = next(proxys)
             token = acc[0]
             key = acc[1]
             logger.info(f"Начинаю выполнять дневные задания. {index}/{len(accounts)} {token}")
             headers_for_login = await get_headers(token, proxy)
             if headers_for_login is None:
                 continue
-
             TASKS = [
-                (complete_breath_session, [headers_for_login]),
+                (complete_breath_session, [headers_for_login, proxy]),
                 (post_daily_tweet, [token, headers_for_login, proxy])
             ]
-            
             for task, args in TASKS:
                 if asyncio.iscoroutinefunction(task):
                     await task(*args)
                 else:
                     task(*args)
                 random_sleep()
-                
             logger.success(f"Все задания выполнены. {token}")
-            claim_daily_insight(headers_for_login, Client(WEB3, key))
+            claim_daily_insight(headers_for_login, Client(WEB3, key), proxy)
     except AttributeError as e:
         logger.error(f"Аккаунт заблокирован или поймал капчу. {token}")
         save_errors(f"Аккаунт заблокирован или поймал капчу. {token}")
@@ -476,38 +466,25 @@ async def complete_daily_tasks():
 async def check_and_complete_tasks():
     try:
         proxys = get_proxy()
-        proxy = next(proxys)
         accounts = db_manager.get_accounts()
         for index, acc in enumerate(accounts, start=1):
+            proxy = next(proxys)
             token = acc[0]
             logger.info(f"Начинаю проверку выполненных заданий. {index}/{len(accounts)} {token}")
             headers_for_login = await get_headers(token, proxy)
             if headers_for_login is None:
                 continue
-            uncomplete_tasks = get_uncomplete_tasks(headers_for_login)
-            TASKS = []
+            uncomplete_tasks = get_uncomplete_tasks(headers_for_login, proxy)
             if len(uncomplete_tasks) == 0:
                 logger.success(f"Все задания выполнены. {token}")
                 continue
             else:
                 for task in uncomplete_tasks:
-                    if task == "set_banner":
-                        TASKS.append((set_banner, [headers_for_login]))
-                    elif task == "like_retweet":
-                        TASKS.append((like_retweet, [headers_for_login]))
-                    elif task == "like_retweet2":
-                        TASKS.append((like_retweet2, [headers_for_login]))
-                    elif task == "like_retweet3":
-                        TASKS.append((like_retweet3, [headers_for_login]))
-                    elif task == "follows":
-                        TASKS.append((follows, [headers_for_login]))
-            await complete_task_twitter(token=token, proxy=proxy, tasks=uncomplete_tasks)
-            for task, args in TASKS:
-                if asyncio.iscoroutinefunction(task):
-                    await task(*args)
-                else:
-                    task(*args)
-                random_sleep()
+                    if asyncio.iscoroutinefunction(task):
+                        await task(headers_for_login, proxy)
+                    else:
+                        task(headers_for_login, proxy)
+                    random_sleep()
             logger.success(f"Все задания выполнены. {token}")
     except AttributeError as e:
         logger.error(f"Аккаунт заблокирован или поймал капчу. {token}")
