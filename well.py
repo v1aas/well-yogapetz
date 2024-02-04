@@ -515,15 +515,15 @@ def get_all_stats_book():
         
 async def claim_books():
     proxys = get_proxy()
-    proxy = next(proxys)
     for acc in db_manager.get_accounts():
+        proxy = next(proxys)
         token = acc[0]
         key = acc[1]
         headers_for_login = await get_headers(token, proxy)
         if headers_for_login is None:
             continue
         logger.info(f"Начинаю выполнять клеймить книжки. {token}")
-        claim_rank_insights(headers_for_login, Client(WEB3, key))
+        claim_rank_insights(headers_for_login, Client(WEB3, key), proxy)
 
 def update_token():
     old_token = input("Введите старый токен: ")
