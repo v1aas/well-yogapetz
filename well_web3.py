@@ -8,7 +8,8 @@ from loguru import logger
 from manager_db import DatabaseManager
 from eth_account.messages import encode_defunct
 from web3.middleware import geth_poa_middleware
-from utilities import to_proxy_format
+from utilities import to_proxy_format, save_errors, get_random_promt
+
 
 with open('data/contract_abi.json', 'r') as file:
     ABI = json.load(file)
@@ -98,6 +99,7 @@ def claim_daily_insight(headers_for_login, client: Client, proxy):
             logger.error(f"Ошибка. Статус: {receipt['status']}")
     except Exception as e:
         logger.error(f"Ошибка {e}")
+        save_errors(f"{client.address}.{e}")
 
 def check_rank_insights(headers_for_login, client: Client, proxy):
     response = requests.get("https://api.gm.io/ygpz/me", headers=headers_for_login, proxies=to_proxy_format(proxy))
@@ -127,7 +129,7 @@ def claim_rank_insights(headers_for_login, client: Client, proxy):
             current_rank,
             signature,
             quest_amount
-            ).build_transaction(
+        ).build_transaction(
                 {
                     'nonce': client.web3.eth.get_transaction_count(client.address),
                     'gas': 300000,
@@ -148,6 +150,32 @@ def claim_rank_insights(headers_for_login, client: Client, proxy):
             logger.error(f"Ошибка. Статус: {receipt['status']}")
     except Exception as e:
         logger.error(f"Ошибка {e}")
+        save_errors(f"{client.address}.{e}")
+
+def mint_ai_nft(client: Client):
+    logger.info("Начинаю минт AI нфт")
+    try:
+        max_fee_priotiry_gas, max_fee_per_gas = get_eip1559_gas(client.web3)
+        tx = insights_contract.functions.mintWell3NFTWithBio(get_random_promt()).build_transaction(
+            {
+                'nonce': client.web3.eth.get_transaction_count(client.address),
+                'gas': 3000000,
+                'maxPriorityFeePerGas': max_fee_priotiry_gas,
+                'maxFeePerGas': max_fee_per_gas,
+            }
+        )
+        signed_txn = client.web3.eth.account.sign_transaction(tx, client.private_key)
+        txn_hash = client.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        logger.info(f"Транзакция отправлена. Хэш: {txn_hash.hex()}")
+        receipt = client.web3.eth.wait_for_transaction_receipt(txn_hash)
+        if (receipt['status'] == 1):
+            logger.success(f"Транзакция прошла успешно! Минт AI нфт успешен! {client.address}")
+            time.sleep(7)
+        else:
+            logger.error(f"Ошибка. Статус: {receipt['status']}")
+    except Exception as e:
+        logger.error(f"Ошибка {e}")
+        save_errors(f"{client.address}.{e}")
 
 def save_results(client: Client):
     result = insights_contract.functions.questResults(client.address).call()
