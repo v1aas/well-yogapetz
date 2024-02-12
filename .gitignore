@@ -1,0 +1,8 @@
+accounts.db
+data/keys.txt
+data/tokens.txt
+data/proxy.txt
+data/tokens_change.txt
+data/invites.txt
+/.venv
+/__pycache__
