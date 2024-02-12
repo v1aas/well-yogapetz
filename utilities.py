@@ -49,7 +49,27 @@ def get_keys():
         return [line.strip() for line in file.readlines()]
 
 def to_proxy_format(proxy):
-    return {
-            'http': proxy,
-            'https': proxy
-    }
+    return {'http': proxy,'https': proxy}
+
+def get_random_promt():
+    promt = ""
+    with open('data/standart_promts.txt', 'r') as file:
+        standart_promts = [line.strip() for line in file.readlines()]
+    with open('data/user_promts.txt', 'r') as file:
+        user_promts = [line.strip() for line in file.readlines()]
+    for standart_promt in random.choices(standart_promts, k=3):
+        promt += standart_promt + ','
+    promt += random.choice(user_promts)
+    return promt
+
+def intro():
+    business_card = """
+    ╔════════════════════════════════════════╗
+    ║        Createad by v1aas               ║
+    ║                                        ║
+    ║        https://t.me/v1aas              ║
+    ║        https://github.com/v1aas        ║
+    ║                                        ║
+    ╚════════════════════════════════════════╝
+    """
+    print(business_card)
