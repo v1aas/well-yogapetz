@@ -1,8 +1,9 @@
 import asyncio
 import inquirer
 from inquirer import prompt
+from utilities import intro
 from manager_db import DatabaseManager
-from well import complete_tasks_well,complete_daily_tasks, update_invites, claim_books, get_all_stats_book, update_token, intro, check_and_complete_tasks, delete_accout, update_batch_token
+from well import complete_tasks_well,complete_daily_tasks, update_invites, claim_books, get_all_stats_book, update_token, check_and_complete_tasks, delete_accout, update_batch_token
 
 db_manager = DatabaseManager()
 db_manager.connect()
