@@ -8,8 +8,8 @@ from fake_useragent import UserAgent
 from manager_db import DatabaseManager
 from better_automation.twitter import TwitterAccount, TwitterClient
 from better_automation.utils import set_windows_selector_event_loop_policy
-from well_web3 import connect_wallet, claim_daily_insight, claim_rank_insights, save_results, WEB3
-from utilities import get_invite, save_errors, save_invite, get_keys, get_proxy, get_tokens, get_tokens_change, get_random_daily_tweet, random_sleep, to_proxy_format
+from well_web3 import connect_wallet, claim_daily_insight, claim_rank_insights, save_results, mint_ai_nft, check_balance, WEB3
+from utilities import get_invite, save_errors, save_invite, get_keys, get_proxy, get_tokens, get_tokens_change, random_sleep, to_proxy_format
 
 set_windows_selector_event_loop_policy()
 db_manager = DatabaseManager()
@@ -182,14 +182,29 @@ def get_num_daily_tweet(headers_for_login, proxy):
         daily = response.json()['contractInfo']['dailyQuest']['nonce'].split('-')
         return list(daily)[2]
     else:
-        logger.error("Ошибка при получении название дейли квеста")
+        logger.error("Ошибка при получении номера дейли квеста")
 
+def is_mint_daily_ai_nft(headers_for_login, proxy):
+    response = requests.get("https://api.gm.io/ygpz/me", headers=headers_for_login, proxies=to_proxy_format(proxy))
+    if response.status_code == 200:
+        daily = response.json()['contractInfo']['dailyQuest']['nonce'].split('-')
+        num = list(daily)[2]
+        raw_daily = response.json()['ygpzQuesting']['rawDailyProgress']
+        if f'{num}-mint-daily-well3nft' in raw_daily:
+            logger.success("AI нфт уже заминчена!")
+            return True, 0
+        else:
+            return False, num
+    else:
+        logger.error("Ошибка при проверке минта AI нфт")
+        return True, 0
+   
 def get_uncomplete_tasks(headers_for_login, proxy):
     tasks = []
     response = requests.get("https://api.gm.io/ygpz/me", headers=headers_for_login, proxies=to_proxy_format(proxy))
     if response.status_code == 200:
         raw_tasks = response.json()['ygpzQuesting']['rawSpecialProgress']
-        if 'retweet-CyberKongz-1750535387095691606' not in raw_tasks:
+        if 'retweet-yogapetz-1756009723122643349' not in raw_tasks:
             tasks.append(like_retweet3)
             logger.info("Задание лайк+ретвит#3 был не выполнено")
         if 'retweet-yogapetz-1750523880463340019' not in raw_tasks:
@@ -204,15 +219,9 @@ def get_uncomplete_tasks(headers_for_login, proxy):
         if 'retweet-yogapetz-1752693511433093285' not in raw_tasks:
             tasks.append(like_retweet4)
             logger.info("Задание лайк+ретвит#4 было не выполнено")
-        if 'join-eesee' not in raw_tasks:
-            tasks.append(join_eesee)
-            logger.info("Задание присоединиться к eesee было не выполнено")
-        if 'share-phaver-holder' not in raw_tasks:
-            tasks.append(share_phaver_holder)
-            logger.info("Задание share-phaver-holder было не выполнено")
-        if 'share-phaver-open' not in raw_tasks:
-            tasks.append(share_phaver_open)
-            logger.info("Задание share-phaver-open было не выполнено")
+        if 'retweet-yogapetz-1755646539610157102' not in raw_tasks:
+            tasks.append(like_retweet5)
+            logger.info("Задание лайк+ретвит#5 было не выполнено")
         return tasks
     else:
         logger.error("Ошибка при проверки заданий")
@@ -221,19 +230,17 @@ def complete_breath_session(headers_for_login, proxy):
     response = requests.post("https://api.gm.io/ygpz/complete-breath-session", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
     if response.status_code == 200:
         logger.success("Клейм за ежедневную метидацию успешен!")
+    elif response.status_code == 400:
+        return
     else:
         logger.error(f"Ошибка при клейме ежедневной метидации. {response.status_code}. {response.text}")
 
 async def post_daily_tweet(token, headers_for_login, proxy):
-    num = get_num_daily_tweet(headers_for_login, proxy)
-    response = requests.post(f"https://api.gm.io/ygpz/claim-exp/{num}-post-daily-yoga-photo", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
-    if response.status_code == 400:
-        return
     try:
-        async with TwitterClient(TwitterAccount(token), proxy=proxy, verify=False) as twitter:
-            tweet = get_random_daily_tweet()
-            tweet_id = await twitter.tweet(tweet)
-            logger.info(f"Дейли пост твитнут, твит id: {tweet_id}")
+        num = get_num_daily_tweet(headers_for_login, proxy)
+        response = requests.post(f"https://api.gm.io/ygpz/claim-exp/{num}-post-daily-yoga-photo", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
+        if response.status_code == 400:
+            return
         if response.status_code == 200:
             logger.success("Клейм за ежедневый твит успешен!")
         else:
@@ -264,7 +271,7 @@ def like_retweet2(headers_for_login, proxy):
         logger.error(f"Ошибка при за лайк+ретвит #2. {response.status_code}. {response.text}")
     
 def like_retweet3(headers_for_login, proxy):
-    response = requests.post("https://api.gm.io/ygpz/claim-exp/retweet-CyberKongz-1750535387095691606", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
+    response = requests.post("https://api.gm.io/ygpz/claim-exp/retweet-yogapetz-1756009723122643349", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
     if response.status_code == 200:
         logger.success("Клейм за лайк+ретвит #3 успешен!")
     else:
@@ -277,26 +284,12 @@ def like_retweet4(headers_for_login, proxy):
     else:
         logger.error(f"Ошибка при за лайк+ретвит #4. {response.status_code}. {response.text}")
     
-def join_eesee(headers_for_login, proxy):
-    response = requests.post("https://api.gm.io/ygpz/claim-exp/join-eesee", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
+def like_retweet5(headers_for_login, proxy):
+    response = requests.post("https://api.gm.io/ygpz/claim-exp/retweet-yogapetz-1755646539610157102", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
     if response.status_code == 200:
-        logger.success("Клейм за join-eesee успешен!")
+        logger.success("Клейм за лайк+ретвит #4 успешен!")
     else:
-        logger.error(f"Ошибка при join-eesee. {response.status_code}. {response.text}")
-
-def share_phaver_holder(headers_for_login, proxy):
-    response = requests.post("https://api.gm.io/ygpz/claim-exp/share-phaver-holder", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
-    if response.status_code == 200:
-        logger.success("Клейм за share-phaver-holder успешен!")
-    else:
-        logger.error(f"Ошибка при share-phaver-holder. {response.status_code}. {response.text}")
-        
-def share_phaver_open(headers_for_login, proxy):
-    response = requests.post("https://api.gm.io/ygpz/claim-exp/share-phaver-open", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
-    if response.status_code == 200:
-        logger.success("Клейм за share-phaver-open успешен!")
-    else:
-        logger.error(f"Ошибка при share-phaver-open. {response.status_code}. {response.text}")
+        logger.error(f"Клейм за лайк+ретвит #5 успешен!. {response.status_code}. {response.text}")
     
 def follows(headers_for_login, proxy):
     response = requests.post("https://api.gm.io/ygpz/claim-exp/follow-yogapetz", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
@@ -316,62 +309,20 @@ def follows(headers_for_login, proxy):
         logger.success("Клейм за подписку #3 успешен!")
     else:
         logger.error(f"Ошибка при за подписку #2. {response.status_code}. {response.text}")
-    
-async def complete_task_twitter(token, proxy, tasks = None):
-    async def set_banner(twitter):
-        logger.info("Ставлю баннер")
-        image = open("data/1500x500.jpg", "rb").read()
-        media_id = await twitter.upload_image(image)
-        banner_image_url = await twitter.update_profile_banner(media_id)
-        if banner_image_url is not None:
-            logger.success("Баннер успешно поставлен")
-        else: 
-            logger.error("Ошибка. Баннер не поставлен")
-    
-    async def like_retweet(twitter):
-        logger.info("Лайк+ретвит #1")
-        logger.info(f"Твит 1 лайкнут: {await twitter.like('1745127428039847937')}")
-        time.sleep(random.randint(2,4))
-        logger.info(f"Твит 1 ретвитнут: {await twitter.repost('1745127428039847937')}")
-    
-    async def like_retweet2(twitter):
-        logger.info("Лайк+ретвит #2")
-        logger.info(f"Твит 2 лайкнут: {await twitter.like('1750523880463340019')}")
-        time.sleep(random.randint(2,4))
-        logger.info(f"Твит 2 ретвитнут: {await twitter.repost('1750523880463340019')}")
-    
-    async def like_retweet3(twitter):
-        logger.info("Лайк+ретвит #3")
-        logger.info(f"Твит 3 лайкнут: {await twitter.like('1750535387095691606')}")
-        time.sleep(random.randint(2,4))
-        logger.info(f"Твит 3 ретвитнут: {await twitter.repost('1750535387095691606')}")
-        
-    functions = []
-    if tasks is None:
-        functions = [set_banner, like_retweet, like_retweet2, like_retweet3]
-    else:
-        for task in tasks:
-            if task == "follows":
-                continue
-            elif task == "set_banner":
-                functions.append(set_banner)
-            elif task == "like_retweet":
-                functions.append(like_retweet)
-            elif task == "like_retweet2":
-                functions.append(like_retweet2)
-            elif task == "like_retweet3":
-                functions.append(like_retweet3)
-    try:
-        async with TwitterClient(TwitterAccount(token), proxy=proxy, verify=False) as twitter:
-            for func in functions:
-                await func(twitter)            
-                sec = random.randint(5,10)
-                logger.info(f"Сплю {sec} перед следующим действием")
-                time.sleep(sec)
-    except Exception as e:
-        logger.error(f"Ошибка - complete_task_twitter. {e}")
-        save_errors(f"Ошибка - complete_task_twitter. {e}")
-        
+
+def claim_daily_nft(headers_for_login, proxy, client):
+    if not check_balance(client):
+        logger.error("На этом кошельке нет баланса")
+        return
+    is_mint, num = is_mint_daily_ai_nft(headers_for_login, proxy)
+    if not is_mint:
+        mint_ai_nft(client)
+        response = requests.post(f"https://api.gm.io/ygpz/claim-exp/{num}-mint-daily-well3nft", json={}, headers=headers_for_login, proxies=to_proxy_format(proxy))
+        if response.status_code == 200:
+            logger.success("Клейм за AI нфт успешен!")
+        else:
+            logger.error(f"Ошибка при клейме AI нфт. {response.status_code}. {response.text}")
+
 async def complete_tasks_well():
     try:
         proxys = get_proxy()
@@ -393,14 +344,15 @@ async def complete_tasks_well():
             else:
                 save_errors(f"Ошибка при привязке кошелька: {token};{client.address}")
             TASKS = [
-                (complete_task_twitter, [token, proxy]),
                 (complete_breath_session, [headers_for_login, proxy]),
                 (post_daily_tweet, [token, headers_for_login, proxy]),
                 (set_banner, [headers_for_login, proxy]),
                 (like_retweet, [headers_for_login, proxy]),
                 (like_retweet2, [headers_for_login, proxy]),
                 (like_retweet3, [headers_for_login, proxy]),
-                (follows, [headers_for_login, proxy]),
+                (like_retweet4, [headers_for_login, proxy]),
+                (like_retweet5, [headers_for_login, proxy]),
+                (follows, [headers_for_login, proxy])
             ]
             logger.info("Начинаю выполнять задания")
             time.sleep(0.5)
@@ -449,6 +401,7 @@ async def complete_daily_tasks():
                 random_sleep()
             logger.success(f"Все задания выполнены. {token}")
             claim_daily_insight(headers_for_login, Client(WEB3, key), proxy)
+            claim_daily_nft(headers_for_login, proxy, Client(WEB3, key))
     except AttributeError as e:
         logger.error(f"Аккаунт заблокирован или поймал капчу. {token}")
         save_errors(f"Аккаунт заблокирован или поймал капчу. {token}")
@@ -540,16 +493,4 @@ def update_batch_token():
 def delete_accout():
     old_token = input("Введите старый токен: ")
     db_manager.delete_accout(old_token)
-
-def intro():
-    business_card = """
-    ╔════════════════════════════════════════╗
-    ║        Createad by v1aas               ║
-    ║                                        ║
-    ║        https://t.me/v1aas              ║
-    ║        https://github.com/v1aas        ║
-    ║                                        ║
-    ╚════════════════════════════════════════╝
-    """
-    print(business_card)
     
